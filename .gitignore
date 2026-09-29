@@ -1,0 +1,49 @@
+# Secrets and machine-local configuration
+.env
+.env.*
+!.env.example
+secrets/
+*.secret
+*.secrets
+*.local
+*.local.*
+config.local.*
+settings.local.*
+qwen_image_auto_prompt_optimizer.json
+
+# Python caches and environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# JavaScript dependencies and test artifacts
+node_modules/
+.npm/
+coverage/
+
+# ComfyUI runtime data and generated assets
+input/
+output/
+temp/
+tmp/
+models/
+*.safetensors
+*.ckpt
+*.pth
+*.pt
+*.gguf
+*.log
+
+# Local editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+.superpowers/
