@@ -13,6 +13,7 @@ class Element {
   focus(){document.activeElement=this;}
   remove(){this.removed=true;if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(child=>child!==this);}
   click(){this.clicked=true;this.onclick?.();}
+  submit(){this.submitted=true;}
   getBoundingClientRect(){return this.className==='qm-organize-wrap'?{left:900,right:936,bottom:760}: {left:10,right:200,bottom:40};}
   find(predicate){return predicate(this)?this:this.children.map(child=>child.find(predicate)).find(Boolean);}
   querySelector(selector){return this.find(el=>selector.startsWith('.')?el.className===selector.slice(1):el.tagName===selector);}
@@ -23,7 +24,7 @@ async function environment(run){
   const requests=[],alerts=[],confirmations=[],downloads=[],storage=new Map(),documentListeners=new Map();
   globalThis.localStorage={getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,String(value))};
   globalThis.setTimeout=callback=>{callback();return 0;};
-  globalThis.document={body:new Element('body'),createElement:tag=>{const element=new Element(tag);if(tag==='a')downloads.push(element);return element;},addEventListener(type,listener){if(!documentListeners.has(type))documentListeners.set(type,new Set());documentListeners.get(type).add(listener);},removeEventListener(type,listener){documentListeners.get(type)?.delete(listener);}};
+  globalThis.document={body:new Element('body'),createElement:tag=>{const element=new Element(tag);if(tag==='form')downloads.push(element);return element;},addEventListener(type,listener){if(!documentListeners.has(type))documentListeners.set(type,new Set());documentListeners.get(type).add(listener);},removeEventListener(type,listener){documentListeners.get(type)?.delete(listener);}};
   globalThis.location={href:'http://localhost:8000/prefix/'};
   globalThis.window={confirm:text=>{confirmations.push(text);return true;},prompt:()=>null,alert:text=>alerts.push(text)};
   globalThis.fetch=async(url,options)=>{requests.push({url,...options});return {ok:true,json:async()=>url.endsWith('/metadata')?{files:JSON.parse(options.body).files.map((file,index)=>({index,file,size:1024,mtime:Date.parse('2026-09-29')}))}:{results:JSON.parse(options.body).results.map(item=>({id:item.id,ok:true}))},blob:async()=>new Blob(['zip'])};};
@@ -127,7 +128,7 @@ test('selecting an image preserves the manager scroll position and selection sta
   assert.ok(grid.find(el=>el.type==='checkbox').checked);
   f.manager.destroy();
 }));
-test('ZIP downloads receive a local-date name and increment the daily suffix',()=>environment(async({downloads})=>{
+test('ZIP export submits the selected current versions directly as a browser download with a local-date name',()=>environment(async({downloads})=>{
   const f=fixture([record('a'),record('b')]);f.manager.open();
   document.body.find(el=>el.className==='qwen-manager').find(el=>el.attributes['aria-label']==='全选').onclick();
   const trigger=async()=>{
@@ -136,8 +137,12 @@ test('ZIP downloads receive a local-date name and increment the daily suffix',()
   };
   await trigger();await trigger();
   const today=`${new Date().getFullYear()}_${String(new Date().getMonth()+1).padStart(2,'0')}_${String(new Date().getDate()).padStart(2,'0')}`;
-  assert.equal(downloads[0].download,`qwen_image_${today}_01.zip`);
-  assert.equal(downloads[1].download,`qwen_image_${today}_02.zip`);
+  for(const [index,form] of downloads.entries()){
+    assert.equal(form.method,'post');assert.equal(form.target.startsWith('qwen-zip-'),true);
+    const payload=JSON.parse(form.children[0].value);
+    assert.deepEqual(payload.results.map(result=>result.id),['a','b']);assert.equal(payload.version,'current');
+    assert.equal(payload.filename,`qwen_image_${today}_${String(index+1).padStart(2,'0')}.zip`);
+  }
   f.manager.destroy();
 }));
 

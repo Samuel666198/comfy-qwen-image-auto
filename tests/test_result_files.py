@@ -1,5 +1,6 @@
 import importlib.util
 import asyncio
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -89,6 +90,13 @@ class ResultFileTests(unittest.TestCase):
                 self.assertEqual(response.status, 200)
                 self.assertEqual(response.headers['Content-Type'], 'application/zip')
                 self.assertTrue((await response.read()).startswith(b'PK'))
+                form_body = json.dumps({'results': [self.versioned_item()], 'version': 'current', 'filename': 'qwen_image_2026_10_01_01.zip'})
+                response = await client.post('/qwen_auto/results/download', data={'payload': form_body})
+                self.assertEqual(response.status, 200)
+                self.assertIn('filename="qwen_image_2026_10_01_01.zip"', response.headers['Content-Disposition'])
+                self.assertTrue((await response.read()).startswith(b'PK'))
+                response = await client.post('/qwen_auto/results/download', data={'payload': json.dumps({'results': [self.item], 'filename': '../bad.zip'})})
+                self.assertEqual(response.status, 400)
                 response = await client.post('/qwen_auto/results/delete', json={'results': [self.item]})
                 self.assertTrue((await response.json())['results'][0]['ok'])
                 response = await client.post('/qwen_auto/results/delete', json={'results': []})

@@ -115,17 +115,22 @@ test('image menu is top-right, closes outside/Escape, and releases document list
   assert.equal(menu.hidden,true); assert.equal(document.activeElement,toggle);
   toggle.onclick(); preview.destroy(); assert.equal(listeners.get('keydown').size,0); assert.equal(listeners.get('pointerdown').size,0);
 }));
-test('result navigation uses accessible compact icon actions; double-click opens a non-native draggable viewer', () => withDOM(()=>{
+test('大图查看菜单与单击、双击都把当前作品打开到查看器', () => withDOM(()=>{
   const preview=createResultPreview({getState:()=>({history:[result()]}),updateState(){}});
   for(const label of ['上一张','下一张','版本历史 · V1','对比','图片管理器']) assert.ok(preview.element.find(e=>e.attributes?.['aria-label']===label),label);
-  const image=preview.element.find(e=>e.tagName==='img'); image.ondblclick();
+  const menu=preview.element.find(e=>e.className==='qr-menu-toggle');menu.onclick();
+  preview.element.find(e=>e.tagName==='button'&&e.textContent==='大图查看').onclick({type:'click'});
   const viewer=document.body.find(e=>e.className==='qwen-result-viewer');
   const stage=viewer.find(e=>e.className==='qr-view-stage'), full=stage.find(e=>e.tagName==='img');
   assert.equal(full.draggable,false);
+  assert.match(full.src,/filename=a.png/);
   let prevented=false;stage.onpointerdown({button:0,pointerId:1,clientX:10,clientY:20,preventDefault(){prevented=true;}});
   assert.equal(prevented,true);
   assert.match(full.style.transform,/translate\(/);
   let dragPrevented=false;stage.ondragstart({preventDefault(){dragPrevented=true;}});assert.equal(dragPrevented,true);
+  viewer.find(e=>e.tagName==='button'&&e.textContent==='关闭 Esc').onclick();
+  const image=preview.element.find(e=>e.tagName==='img'); image.ondblclick({type:'dblclick'});
+  assert.ok(document.body.find(e=>e.className==='qwen-result-viewer'));
   preview.destroy();
 }));
 test('repeated upscale requires confirmation and preserves the captured result identity', () => withDOM(()=>{

@@ -90,19 +90,25 @@ export function createResultManager({getState,updateState,isLocked=()=>false,vie
       if(!overlay || errors.length)window.alert(message);
     }catch(error){message=error.message;window.alert(message);}finally{setBusy(false);render();}
   }
-  async function download(version) {
+  function download(version) {
     if(busy || isLocked() || !selected.size)return;
     setBusy(true);message='正在打包…';render();
     try {
-      const response=await request('download',{results:(getState().history || []).filter(r=>selected.has(r.id)),version:'current'});
-      const blob=await response.blob(), href=URL.createObjectURL(blob), link=make('a');
+      const form=make('form'), frame=make('iframe');
       const now=new Date(), date=`${now.getFullYear()}_${String(now.getMonth()+1).padStart(2,'0')}_${String(now.getDate()).padStart(2,'0')}`;
       const key=`qwen-image-manager-zip-${date}`;let serial=1,storageAvailable=true,previous=0;
       try{previous=Number(localStorage.getItem(key)||0);if(!Number.isInteger(previous)||previous<0)previous=0;serial=previous+1;localStorage.setItem(key,String(previous));}catch{storageAvailable=false;serial=1;}
-      link.download=`qwen_image_${date}_${String(serial).padStart(2,'0')}.zip`;document.body.append(link);link.click();
+      const filename=`qwen_image_${date}_${String(serial).padStart(2,'0')}.zip`, target=`qwen-zip-${Date.now()}-${serial}`;
+      frame.name=target;frame.hidden=true;frame.setAttribute('aria-hidden','true');
+      form.method='post';form.action=endpoint('download');form.target=target;form.hidden=true;
+      const payload=make('input');payload.type='hidden';payload.name='payload';
+      payload.value=JSON.stringify({results:(getState().history || []).filter(r=>selected.has(r.id)),version:'current',filename});
+      form.append(payload);document.body.append(frame,form);form.submit();form.remove();
       if(storageAvailable)try{localStorage.setItem(key,String(serial));}catch{}
-      link.remove();setTimeout(()=>URL.revokeObjectURL(href),60000);message='压缩包已开始下载';
-    }catch(error){message=error.message;}finally{setBusy(false);render();}
+      message='已提交压缩包下载';
+      setTimeout(()=>frame.remove(),5*60*1000);
+      setTimeout(()=>{setBusy(false);render();},1000);
+    }catch(error){message=error.message;setBusy(false);render();}
   }
   function render() {
     if(!overlay)return;

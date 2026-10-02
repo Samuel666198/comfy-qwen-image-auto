@@ -1,11 +1,13 @@
 """File operations restricted to the workbench's generated output directory."""
 import asyncio
+import json
 import os
 from pathlib import Path, PurePosixPath
 import re
 import stat
 import tempfile
 import zipfile
+from urllib.parse import quote
 
 import folder_paths
 
@@ -209,14 +211,23 @@ def register_routes():
     async def download(request):
         temporary = None
         try:
-            body = await request.json()
+            if request.content_type == 'application/x-www-form-urlencoded':
+                form = await request.post()
+                body = json.loads(form.get('payload', ''))
+            else:
+                body = await request.json()
+            if not isinstance(body, dict):
+                raise ValueError("请求格式无效")
+            filename = body.get('filename', 'qwen_images.zip')
+            if not isinstance(filename, str) or not re.fullmatch(r'[A-Za-z0-9_.-]{1,128}\.zip', filename):
+                raise ValueError("压缩包文件名无效")
             temporary = await asyncio.to_thread(build_archive, body.get('results'), body.get('version', 'original'))
-        except (ValueError, OSError, TypeError, AttributeError) as error:
+        except (ValueError, OSError, TypeError, AttributeError, web.HTTPException) as error:
             return web.json_response({'error': str(error)}, status=400)
         try:
             response = web.StreamResponse(headers={
                 'Content-Type': 'application/zip',
-                'Content-Disposition': 'attachment; filename="qwen_images.zip"',
+                'Content-Disposition': f'attachment; filename="{filename}"; filename*=UTF-8\'\'{quote(filename)}',
                 'Content-Length': str(temporary.stat().st_size),
             })
             await response.prepare(request)

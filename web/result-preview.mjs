@@ -1,4 +1,4 @@
-import { createResultManager } from './result-manager.mjs?v=20260930-folder-context-1';
+import { createResultManager } from './result-manager.mjs?v=20261001-click-download-fix-1';
 import { createVersionHistory } from './version-history.mjs?v=20260930-archive-date-1';
 import { migrateHistory, currentVersion, previousVersion, selectVersion, addGeneratedResult, appendVersion, isAvailableReference } from './version-state.mjs?v=20260930-archive-date-1';
 
@@ -235,9 +235,9 @@ export function createResultPreview({ getState, updateState, onUpscale, onEdit, 
   const deleteButton = button('删除', () => { closeMenu(); if (current && !isLocked()) manager.deleteResults([current.id]); }); deleteButton.className = 'qr-delete';
   const editButton=button('图片编辑',()=>{closeMenu();if(current&&!isLocked())onEdit?.(current.id,currentVersion(current)?.id);});
   const openHistory=(resultId=current?.id)=>{closeMenu();if(resultId)historyTargetResultId=resultId;versionHistory.open();};
-  toolbar.append(button('下载', download), button('大图查看', openViewer), editButton, button('版本历史',()=>openHistory()), upscale, deleteButton);
-  img.onclick = openViewer;
-  img.ondblclick = openViewer;
+  toolbar.append(button('下载', download), button('大图查看', () => openViewer()), editButton, button('版本历史',()=>openHistory()), upscale, deleteButton);
+  img.onclick = () => openViewer();
+  img.ondblclick = () => openViewer();
   img.onerror = () => { img.hidden = true; empty.hidden = false; empty.textContent = '图片文件无法读取，请检查输出文件是否仍存在。'; };
   img.onload = () => { img.hidden = false; empty.hidden = true; };
   frame.append(img, empty, busyMask, menuToggle, toolbar);

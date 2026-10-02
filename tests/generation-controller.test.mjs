@@ -14,7 +14,7 @@ test('transparent background prepends a runtime-only prompt constraint', async t
   const s=setup(t,{getWorkflow:async()=>({output:{14:{inputs:{prompt:'原始提示词',steps:24}}},workflow:{}})});
   await s.c.generate({transparentBackground:true,draft:{prompt:'原始提示词'}});
   const posted=s.calls.find(call=>call.path==='/prompt').body.prompt['14'].inputs.prompt;
-  assert.equal(posted,'透明背景，主体之外保持透明通道。\n原始提示词');
+  assert.equal(posted,'这是一张带有 Alpha 通道的 RGBA 图像，主体之外的背景透明。\n原始提示词');
   assert.equal(s.c.getJob().snapshot.prompt,'原始提示词');
 });
 function setup(t, overrides = {}) {

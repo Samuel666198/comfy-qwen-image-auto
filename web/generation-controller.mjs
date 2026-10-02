@@ -151,7 +151,7 @@ export function createGenerationController({ node, api, getWorkflow, onState, on
         job.snapshot = structuredClone(output[String(node.id)].inputs);
         output[String(node.id)].inputs.execution_token = promptId;
         if (job.context.transparentBackground && typeof output[String(node.id)].inputs.prompt === 'string') {
-          const prefix = '透明背景，主体之外保持透明通道。';
+          const prefix = '这是一张带有 Alpha 通道的 RGBA 图像，主体之外的背景透明。';
           output[String(node.id)].inputs.prompt = `${prefix}\n${output[String(node.id)].inputs.prompt}`;
         }
         if (job.context.region) output[String(node.id)].inputs.region_json = JSON.stringify(job.context.region);

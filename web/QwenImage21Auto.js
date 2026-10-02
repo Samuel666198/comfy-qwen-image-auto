@@ -4,8 +4,8 @@ import { api } from "../../scripts/api.js";
 import { isRefFileDrop, normalizeRefs, moveRef, normalizeLoras, presetForSteps, resolveInferenceState, normalizeAccelerators, aspectRatioFromPrompt, shouldApplyPromptRatio } from "./panel-state.mjs?v=20260927-region-4";
 import { createPromptEditor, estimatePromptLength } from "./prompt-editor.mjs?v=20260930-weighted-count-2";
 import { createParameterPopover } from "./parameter-popover.mjs?v=20260927-resolution-480-768-1";
-import { createResultPreview, appendResult, applyUpscale } from "./result-preview.mjs?v=20260930-folder-context-1";
-import { createGenerationController, isJobBusy } from "./generation-controller.mjs?v=20260929-refinement-1";
+import { createResultPreview, appendResult, applyUpscale } from "./result-preview.mjs?v=20261001-click-download-fix-1";
+import { createGenerationController, isJobBusy } from "./generation-controller.mjs?v=20261002-alpha-prompt-1";
 
 import { createExtensionsPopover } from "./extensions-popover.mjs?v=20260928-responses-1";
 import { migrateHistory, currentVersion, addGeneratedResult, appendVersion, addPromptSnapshot, isAvailableReference } from './version-state.mjs?v=20260930-archive-date-1';
